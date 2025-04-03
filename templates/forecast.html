@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Series Forecasting - Generate Forecast</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background-color: #343a40 !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .card-header {
+            background-color: #f1f1f1;
+            border-radius: 10px 10px 0 0 !important;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+        }
+        .page-header {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        canvas {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-graph-up-arrow me-2"></i>
+                Time Series Forecasting Platform
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="bi bi-house-door me-1"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/tune"><i class="bi bi-gear me-1"></i> Tuning</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/forecast"><i class="bi bi-graph-up me-1"></i> Forecasting</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ mlflow_url }}" target="_blank">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> MLflow UI
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-12">
+                    <h1 class="mb-1">Generate Forecast</h1>
+                    <p class="lead text-muted mb-0">
+                        Use trained models to predict future values in your time series data
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-sliders text-primary me-2"></i>
+                        Forecast Settings
+                    </div>
+                    <div class="card-body">
+                        <form action="/forecast_direct" method="post" id="forecastForm">
+                            <div class="mb-3">
+                                <label for="model" class="form-label">Select Model</label>
+                                <select class="form-select" id="model" name="model" required>
+                                    <option value="">-- Select a model --</option>
+                                    {% for model in models %}
+                                        <option value="{{ model.name }}" {% if model_name and model_name == model.name %}selected{% endif %}>
+                                            {{ model.name }} 
+                                            {% if model.type %}({{ model.type }}){% endif %}
+                                            {% if model.created %}- {{ model.created }}{% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if not models %}
+                                    <div class="form-text text-danger">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                        No models available. Train and save a model first.
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="dataset" class="form-label">Select Dataset</label>
+                                <select class="form-select" id="dataset" name="dataset" required>
+                                    <option value="">-- Select a dataset --</option>
+                                    {% for dataset in datasets %}
+                                        <option value="{{ dataset.path }}" {% if dataset_name and dataset_name == dataset.path %}selected{% endif %}>
+                                            {{ dataset.name }}
+                                            {% if dataset.rows %} ({{ dataset.rows }} rows){% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if not datasets %}
+                                    <div class="form-text text-danger">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                        No datasets available. Upload a dataset first.
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="horizon" class="form-label">Forecast Horizon</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="horizon" name="horizon" value="{{ horizon|default(5) }}" min="1" max="30" required>
+                                    <span class="input-group-text">steps</span>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Number of time steps to forecast ahead
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary" {% if not models or not datasets %}disabled{% endif %}>
+                                    <i class="bi bi-graph-up-arrow me-2"></i>
+                                    Generate Forecast
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-9">
+                {% if forecast_data %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0">Forecast Results</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12 mb-4">
+                                    <canvas id="forecastChart" width="100%" height="350"></canvas>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="mb-3">Forecasted Values</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Forecast Value</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% if forecast_data %}
+                                                    {% if forecast_data.forecast %}
+                                                        {% for point in forecast_data.forecast %}
+                                                            <tr>
+                                                                <td>{{ point.date }}</td>
+                                                                <td>{{ "%.4f"|format(point.value) }}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    {% elif forecast_data.values %}
+                                                        {% for i in range(forecast_data.values|length) %}
+                                                            <tr>
+                                                                <td>{% if forecast_data.dates %}{{ forecast_data.dates[i] }}{% else %}Step {{ i + 1 }}{% endif %}</td>
+                                                                <td>{{ "%.4f"|format(forecast_data.values[i]) }}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column justify-content-center align-items-center" style="min-height: 350px;">
+                            <i class="bi bi-graph-up text-muted" style="font-size: 4rem;"></i>
+                            <h4 class="text-muted mt-3">No forecast data available</h4>
+                            <p class="text-center text-muted">
+                                Select a model and dataset from the left panel and click "Generate Forecast" to see the results here.
+                            </p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
+    {% if forecast_data %}
+    <script>
+        // Store the forecast data directly in a variable
+        var forecastingData = {{ forecast_data|tojson|safe }};
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the canvas context
+            var ctx = document.getElementById('forecastChart').getContext('2d');
+            
+            // Initialize data arrays
+            var labels = [];
+            var historicalData = [];
+            var forecastData = [];
+            
+            // Process the forecast data based on its structure
+            if (forecastingData.forecast) {
+                // Handle the new format with historical and forecast data
+                if (forecastingData.historical) {
+                    forecastingData.historical.forEach(function(point) {
+                        labels.push(point.date);
+                        historicalData.push(point.value);
+                        forecastData.push(null);
+                    });
+                }
+                
+                forecastingData.forecast.forEach(function(point) {
+                    labels.push(point.date);
+                    historicalData.push(null);
+                    forecastData.push(point.value);
+                });
+            } else if (forecastingData.values) {
+                // Handle the old format
+                if (forecastingData.original_dates) {
+                    for (var i = 0; i < forecastingData.original_dates.length; i++) {
+                        labels.push(forecastingData.original_dates[i]);
+                        historicalData.push(forecastingData.original_values[i]);
+                        forecastData.push(null);
+                    }
+                }
+                
+                if (forecastingData.dates) {
+                    for (var i = 0; i < forecastingData.dates.length; i++) {
+                        labels.push(forecastingData.dates[i]);
+                        historicalData.push(null);
+                        forecastData.push(forecastingData.values[i]);
+                    }
+                }
+            }
+            
+            // Create the chart
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Historical Data',
+                            data: historicalData,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            fill: true,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Forecast',
+                            data: forecastData,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 3,
+                            pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                            fill: true,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Time Series Forecast',
+                            font: { size: 16 }
+                        },
+                        legend: { position: 'top' },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Value'
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false
+                    }
+                }
+            });
+        });
+    </script>
+    {% endif %}
+</body>
+</html> 

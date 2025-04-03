@@ -1,0 +1,107 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environments
+venv/
+env/
+ENV/
+.env
+.venv
+env.bak/
+venv.bak/
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+.idea_modules/
+
+# VSCode
+.vscode/
+*.code-workspace
+.history/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Data files
+*.csv
+*.xlsx
+*.xls
+*.json
+*.h5
+/data/
+/datasets/
+!/datasets/examples/  # Keep example datasets if needed
+
+# Model files
+*.h5
+*.pkl
+*.joblib
+models/
+saved_models/
+checkpoints/
+
+# MLflow
+mlruns/
+mlflow.db
+
+# TensorFlow / Keras
+*.ckpt
+*.pb
+*.pbtxt
+*.data-*
+*.index
+*.meta
+*.tfevents.*
+
+# Logs
+*.log
+logs/
+log/
+*.log.*
+nohup.out
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Flask
+instance/
+.webassets-cache
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Misc
+.cache/
+temp/
+tmp/ 
