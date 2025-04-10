@@ -1,7 +1,7 @@
 FROM python:3.9-slim
 
-# Add a label with build date for tracking CI builds
-LABEL build_date="$(date)" maintainer="DDM501-MSE Team"
+# Add a label with build date for tracking CI builds - Updated
+LABEL build_date="$(date)" maintainer="DDM501-MSE Team" version="1.0.1"
 
 WORKDIR /app
 
