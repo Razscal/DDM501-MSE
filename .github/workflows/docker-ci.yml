@@ -21,7 +21,7 @@ jobs:
             echo "✅ DOCKER_PASSWORD is available"
             echo "   Password length: ${#PASSWORD}"
           else
-            echo "❌ DOCKER_PASSWORD is NOT set or empty"
+            echo "❌ DOCKER_PASSWORD is NOT set or emptyy"
           fi
         env:
           PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
