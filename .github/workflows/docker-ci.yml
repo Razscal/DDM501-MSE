@@ -11,7 +11,29 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: DOCKER
     steps:
+      - name: Debug - Secret Availability
+        run: |
+          echo "Starting secret debug checks..."
+          echo "Environment: ${{ github.workflow }} on ${{ github.ref }}"
+          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
+            echo "✅ DOCKERHUB_USERNAME is available"
+            echo "   Username length: ${#USERNAME}"
+          else
+            echo "❌ DOCKERHUB_USERNAME is NOT set or empty"
+          fi
+          
+          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "✅ DOCKERHUB_TOKEN is available"
+            echo "   Token length: ${#TOKEN}"
+          else
+            echo "❌ DOCKERHUB_TOKEN is NOT set or empty"
+          fi
+        env:
+          USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          
       - name: Checkout code
         uses: actions/checkout@v4
 
