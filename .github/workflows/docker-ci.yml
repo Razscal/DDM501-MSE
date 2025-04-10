@@ -12,6 +12,19 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
+      - name: Debug - Check Secret Availability
+        run: |
+          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
+            echo "DOCKERHUB_USERNAME is set"
+          else
+            echo "DOCKERHUB_USERNAME is NOT set"
+          fi
+          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "DOCKERHUB_TOKEN is set"
+          else
+            echo "DOCKERHUB_TOKEN is NOT set"
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
 
