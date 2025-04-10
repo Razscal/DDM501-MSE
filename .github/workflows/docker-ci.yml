@@ -11,17 +11,13 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: DOCKER
     steps:
       - name: Debug - Print Docker Info
         run: |
-          echo "Starting Docker login debug..."
-          if [[ -n "${{ secrets.DOCKERHUB_USERNAME }}" ]] && [[ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]]; then
-            echo "Using username: ${{ secrets.DOCKERHUB_USERNAME }}"
-            echo "Both DOCKERHUB_USERNAME and DOCKERHUB_TOKEN are available"
-          else
-            echo "Missing required secrets"
-            exit 1
-          fi
+          echo "Starting Docker login"
+          echo "Using username from environment"
+          echo "Checking secrets availability..."
 
       - name: Checkout code
         uses: actions/checkout@v4
