@@ -11,27 +11,27 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    env:
+      DOCKER_USERNAME: 9davenguyen
+      DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - name: Debug - Print Docker Info
         run: |
           echo "Starting Docker login debug..."
-          echo "Using username: 9davenguyen"
+          echo "Using username: $DOCKER_USERNAME"
           echo "Checking if secrets are available..."
-          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+          if [ -n "$DOCKER_PASSWORD" ]; then
             echo "Token is available"
-            echo "Token length: ${#TOKEN}"
+            echo "Token length: ${#DOCKER_PASSWORD}"
           else
             echo "Token is NOT available"
           fi
-        env:
-          TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Login to Docker Hub
-        run: |
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u 9davenguyen --password-stdin
+        run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -42,5 +42,5 @@ jobs:
           context: .
           push: true
           tags: |
-            9davenguyen/ddm501-mse:latest
-            9davenguyen/ddm501-mse:${{ github.sha }} 
+            ${{ env.DOCKER_USERNAME }}/ddm501-mse:latest
+            ${{ env.DOCKER_USERNAME }}/ddm501-mse:${{ github.sha }} 
