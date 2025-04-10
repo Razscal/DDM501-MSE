@@ -1,4 +1,4 @@
-.PHONY: venv install start-mlflow reset-mlflow run-app simple-tuning custom-tuning save-best-model lint format clean clean-mlflow help docker-build docker-run test
+.PHONY: venv install start-mlflow reset-mlflow run-app simple-tuning custom-tuning save-best-model lint format clean clean-mlflow help docker-build docker-run test docker-compose
 
 # Variables
 PYTHON = python3
@@ -90,7 +90,17 @@ docker-build:
 
 # Docker run
 docker-run:
-	docker run -p 5001:5001 -p 5002:5002 time-series-forecasting-platform
+	@if [ -z "$(DOCKER_USERNAME)" ]; then \
+		echo "Error: DOCKER_USERNAME environment variable is not set"; \
+		echo "Usage: make docker-run DOCKER_USERNAME=your_dockerhub_username"; \
+		exit 1; \
+	fi
+	docker run -p 5001:5001 -p 5002:5002 $(DOCKER_USERNAME)/ddm501-mse:latest
+
+# Docker compose
+docker-compose:
+	docker-compose up --build
+	docker-compose down
 
 # Help message
 help:
@@ -112,4 +122,5 @@ help:
 	@echo "  clean             : Clean up cache files"
 	@echo "  clean-mlflow      : Clean MLflow data"
 	@echo "  docker-build      : Build Docker image"
-	@echo "  docker-run        : Run Docker container" 
+	@echo "  docker-run        : Run Docker container"
+	@echo "  docker-compose    : Build and start Docker containers" 

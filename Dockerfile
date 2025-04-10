@@ -1,5 +1,8 @@
 FROM python:3.9-slim
 
+# Add a label with build date
+LABEL build_date="$(date)"
+
 WORKDIR /app
 
 # Install system dependencies
