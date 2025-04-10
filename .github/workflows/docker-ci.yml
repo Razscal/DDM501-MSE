@@ -19,21 +19,22 @@ jobs:
           echo "Checking if secrets are available..."
           if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
             echo "Token is available"
+            echo "Token length: ${#TOKEN}"
           else
             echo "Token is NOT available"
           fi
+        env:
+          TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u 9davenguyen --password-stdin
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: 9davenguyen
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
