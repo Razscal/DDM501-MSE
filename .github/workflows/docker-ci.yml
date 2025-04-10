@@ -19,21 +19,21 @@ jobs:
           echo "Environment: ${{ github.workflow }} on ${{ github.ref }}"
           if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
             echo "✅ DOCKERHUB_USERNAME is available"
-            echo "   Username length: ${#USERNAME}"
+            echo "   Username length: ${{ secrets.DOCKERHUB_USERNAME }}"
           else
             echo "❌ DOCKERHUB_USERNAME is NOT set or empty"
           fi
           
           if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
             echo "✅ DOCKERHUB_TOKEN is available"
-            echo "   Token length: ${#TOKEN}"
+            echo "   Token length: ${{ secrets.DOCKERHUB_TOKEN }}"
           else
-            echo "❌ DOCKERHUB_TOKEN is NOT set or empty"
+            echo "❌ DOCKERHUB_TOKEN is NOT set or empty 1"
           fi
         env:
           USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          
+            
       - name: Checkout code
         uses: actions/checkout@v4
 
